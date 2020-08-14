@@ -28,41 +28,79 @@ The dataset is stored in a comma-separated-value (CSV) file and there are a tota
 Show any code that is needed to
 
 1. Load the data (i.e. `read.csv()`)
-```{R echo = TRUE}
+
+```r
 unzip("./activity.zip")
 data <- read.csv("./activity.csv")
 ```
 
 2. Process/transform the data (if necessary) into a format suitable for your analysis
     
-```{R echo = TRUE}
+
+```r
 data$date <- as.Date(data$date, "%Y-%m-%d")
 head(data, 5)
+```
+
+```
+##   steps       date interval
+## 1    NA 2012-10-01        0
+## 2    NA 2012-10-01        5
+## 3    NA 2012-10-01       10
+## 4    NA 2012-10-01       15
+## 5    NA 2012-10-01       20
 ```
 
 ## What is mean total number of steps taken per day?
 
 1. Calculate the total number of steps taken per day
-```{R echo = TRUE}
+
+```r
 sums_day <- tapply(data$steps, data$date, sum)
 sums_day <- cbind.data.frame(unique(data$date), sums_day)
 names(sums_day) <- c("date", "sum")
 head(sums_day, 5)
 ```
 
+```
+##                  date   sum
+## 2012-10-01 2012-10-01    NA
+## 2012-10-02 2012-10-02   126
+## 2012-10-03 2012-10-03 11352
+## 2012-10-04 2012-10-04 12116
+## 2012-10-05 2012-10-05 13294
+```
+
 2. If you do not understand the difference between a histogram and a barplot, research the difference between them. Make a histogram of the total number of steps taken each day
-```{R echo = TRUE}
+
+```r
 library(ggplot2)
 g <- ggplot(sums_day, aes(x = sum))
 g + geom_histogram(fill = "red", bins = 20) + labs(title = "Daily steps", x = "Steps", y = "Frequency")
-```  
+```
+
+```
+## Warning: Removed 8 rows containing non-finite values (stat_bin).
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
 
 3. Calculate and report the mean and median of the total number of steps taken per day
-```{R echo = TRUE}
+
+```r
 mean(sums_day$sum, na.rm = TRUE)
 ```
-```{R echo = TRUE}
+
+```
+## [1] 10766.19
+```
+
+```r
 median(sums_day$sum, na.rm = TRUE)
+```
+
+```
+## [1] 10765
 ```
 
 ## What is the average daily activity pattern?
