@@ -59,10 +59,12 @@ g + geom_histogram(fill = "red", bins = 20) + labs(title = "Daily steps", x = "S
 
 3. Calculate and report the mean and median of the total number of steps taken per day
 ```{R echo = TRUE}
-mean(sums_day$sum, na.rm = TRUE)
+mean1 <- mean(sums_day$sum, na.rm = TRUE)
+mean1
 ```
 ```{R echo = TRUE}
-median(sums_day$sum, na.rm = TRUE)
+median1 <- median(sums_day$sum, na.rm = TRUE)
+median1
 ```
 
 ## What is the average daily activity pattern?
@@ -80,12 +82,83 @@ g + geom_line() + labs(title = "Average daily steps", x = "Interval", y = "Avera
 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
 ```{R echo = TRUE}
-cond <- mean_interval$mean_steps == max(mean_interval$mean_steps)
-mean_interval[cond, "interval"]
+subset(mean_interval, mean_steps == max(mean_interval$mean_steps))$interval
 ```
 
 ## Imputing missing values
 
+Note that there are a number of days/intervals where there are missing values (coded as `NA`). The presence of missing days may introduce bias into some calculations or summaries of the data.
 
+1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with `NAs`)
+
+```{R echo = TRUE}
+nrow(subset(data, is.na(steps)))
+```
+
+2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+
+3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+```{R echo =TRUE}
+data_na <- data
+## Filling using the mean for that interval
+data[is.na(data$steps), "steps"] <- mean_interval[mean_interval$interval %in% data[is.na(data$steps), "interval"], "mean_steps"]
+head(data, 10)
+```
+
+4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+```{R echo = TRUE}
+sums_day2 <- tapply(data$steps, data$date, sum)
+sums_day2 <- cbind.data.frame(unique(data$date), sums_day2)
+names(sums_day2) <- c("date", "sum")
+g <- ggplot(sums_day2, aes(x = sum))
+g + geom_histogram(fill = "red", bins = 20) + labs(title = "Daily steps", x = "Steps", y = "Frequency")
+```
+```{R echo = TRUE}
+mean2 <- mean(sums_day2$sum, na.rm = TRUE)
+mean2
+```
+```{R echo = TRUE}
+median2 <- median(sums_day2$sum, na.rm = TRUE)
+median2
+```
+
+DataSet| Mean Steps | Median Steps
+--- | --- | ---
+With NA | `r mean1` | `r median1`     
+NA's filled with mean of that interval | `r mean2` | `r median2`
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+For this part the `weekdays()` function may be of some help here. Use the dataset with the filled-in missing values for this part.
+
+1. Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+
+```{R echo = TRUE}
+vect <- weekdays(data$date, abbreviate = TRUE) %in% c("sáb", "dom")
+divide <- function(x) {
+    if (x) {
+        "weekend"
+    }
+    else  {
+        "weekday"
+    }
+}
+data$type <- as.factor(sapply(vect, divide))
+head(data, 10)
+```
+
+2. Make a panel plot containing a time series plot (i.e. `type = "l"`|) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
+
+```{R echo = TRUE}
+mean_interval <- tapply(data$steps, list(as.factor(data$interval), as.factor(data$type)), mean, na.rm = TRUE)
+funct <- function(x) {
+  interval <- trimws(as.character(x["interval"]))
+  type <- as.character(x["type"])
+  mean_interval[interval, type]
+}
+data$avg <- as.numeric(apply(data, 1, funct))
+g <- ggplot(data, aes(interval, avg))
+g + geom_line() + facet_grid(. ~ type) + labs(title = "Average Steps By Intervals", x = "Interval", y = "Average Steps")
+```
